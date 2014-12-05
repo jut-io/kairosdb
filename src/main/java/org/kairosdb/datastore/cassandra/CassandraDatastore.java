@@ -45,6 +45,8 @@ import org.kairosdb.core.exception.DatastoreException;
 import org.kairosdb.core.reporting.ThreadReporter;
 import org.kairosdb.util.KDataOutput;
 import org.kairosdb.util.MemoryMonitor;
+import org.kairosdb.util.Retriable;
+import org.kairosdb.util.Retryer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,8 +163,14 @@ public class CassandraDatastore implements Datastore
 			m_cluster = HFactory.getOrCreateCluster("kairosdb-cluster",
 					hostConfig, cassandraAuthentication);
 
-			KeyspaceDefinition keyspaceDef = m_cluster.describeKeyspace(m_keyspaceName);
-
+			final Retryer retryer = new Retryer.Builder().maxRetries(10).build();
+			final KeyspaceDefinition keyspaceDef = retryer.retry(new Retriable<KeyspaceDefinition>() {
+				@Override
+				public KeyspaceDefinition execute() {
+					return m_cluster.describeKeyspace(m_keyspaceName);
+				}
+			});
+		    
 			if (keyspaceDef == null)
 				createSchema(replicationFactor);
 				//set global consistency level
@@ -248,6 +256,10 @@ public class CassandraDatastore implements Datastore
 		catch (HectorException e)
 		{
 			throw new DatastoreException(e);
+		}
+		catch (Exception e)
+		{
+		    throw new DatastoreException(e);
 		}
 	}
 

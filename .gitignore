@@ -17,3 +17,8 @@ lib/ivy/test/*
 .DS_Store
 myivysettings.xml
 tablesaw.properties
+
+# Eclipse project files
+.project
+.classpath
+/bin/

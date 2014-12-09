@@ -4,12 +4,19 @@
 KAIROSDB_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$KAIROSDB_BIN_DIR/.."
 
-KAIROSDB_LIB_DIR="lib"
-KAIROSDB_LOG_DIR="log"
+KAIROSDB_ENV_FILE=${KAIROSDB_ENV_FILE:-"$KAIROSDB_BIN_DIR/kairosdb-env.sh"}
 
-if [ -f "$KAIROSDB_BIN_DIR/kairosdb-env.sh" ]; then
-	. "$KAIROSDB_BIN_DIR/kairosdb-env.sh"
+if [ -f "$KAIROSDB_ENV_FILE" ]; then
+    . $KAIROSDB_ENV_FILE
 fi
+
+KAIROSDB_CONF_DIR=${KAIROSDB_CONF_DIR:-"conf"}
+KAIROSDB_LOG_DIR=${KAIROSDB_LOG_DIR:-"log"}
+KAIROSDB_LIB_DIR=${KAIROSDB_LIB_DIR:-"lib"}
+KAIROSDB_PID_FILE=${KAIROSDB_PID_FILE:-"/var/run/kairosdb.pid"}
+KAIROSDB_CONF_FILE=${KAIROSDB_CONF_FILE:-"$KAIROSDB_CONF_DIR/kairosdb.properties"}
+KAIROSDB_LOG_FILE=${KAIROSDB_PID_FILE:-"$KAIROSDB_LOG_DIR/kairosdb.log"}
+
 
 if [ ! -d "$KAIROSDB_LOG_DIR" ]; then
 	mkdir "$KAIROSDB_LOG_DIR"
@@ -37,11 +44,11 @@ done
 
 if [ "$1" = "run" ] ; then
 	shift
-	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c run -p conf/kairosdb.properties
+	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c run -p $KAIROSDB_CONF_FILE
 elif [ "$1" = "start" ] ; then
 	shift
 	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main \
-		-c start -p conf/kairosdb.properties >> "$KAIROSDB_LOG_DIR/kairosdb.log" 2>&1 &
+		-c start -p $KAIROSDB_CONF_FILE >> "$KAIROSDB_LOG_DIR/kairosdb.log" 2>&1 &
 	echo $! > "$KAIROS_PID_FILE"
 elif [ "$1" = "stop" ] ; then
 	shift
@@ -53,10 +60,10 @@ elif [ "$1" = "stop" ] ; then
 	rm $KAIROS_PID_FILE
 elif [ "$1" = "export" ] ; then
 	shift
-	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c export -p conf/kairosdb.properties $*
+	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c export -p $KAIROSDB_CONF_FILE $*
 elif [ "$1" = "import" ] ; then
 	shift
-	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c import -p conf/kairosdb.properties $*
+	exec "$JAVA" $JAVA_OPTS -cp $CLASSPATH org.kairosdb.core.Main -c import -p $KAIROSDB_CONF_FILE $*
 else
 	echo "Unrecognized command."
 	exit 1
